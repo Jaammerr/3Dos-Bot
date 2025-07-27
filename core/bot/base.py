@@ -222,11 +222,17 @@ class Bot:
             referred_by=referral_code,
         )
 
-    async def _login_account(self, api: _3dosAPI) -> str:
-        return await api.login(
-            email=self.account_data.email,
-            password=self.account_data.account_password,
-        )
+    async def _login_account(self, api: _3dosAPI, email: str = None, password: str = None) -> str:
+        if not email or not password:
+            return await api.login(
+                email=self.account_data.email,
+                password=self.account_data.account_password,
+            )
+        else:
+            return await api.login(
+                email=email,
+                password=password,
+            )
 
     async def process_registration(self) -> OperationResult | None:
         max_attempts = config.attempts_and_delay_settings.max_register_attempts
@@ -411,7 +417,7 @@ class Bot:
                     await api.close_session()
 
 
-    async def process_login(self) -> OperationResult | None:
+    async def process_login(self, relogin: bool = False) -> OperationResult | None:
         max_attempts = config.attempts_and_delay_settings.max_register_attempts
 
         for attempt in range(max_attempts):
@@ -419,15 +425,24 @@ class Bot:
 
             try:
                 db_account_value = await Accounts.get_account(email=self.account_data.email)
-                if config.application_settings.skip_logged_accounts is True and db_account_value and db_account_value.access_token:
-                    logger.warning(f"Account: {self.account_data.email} | Account already logged in, skipped")
-                    return operation_success(email=self.account_data.email, account_password=self.account_data.account_password)
+                if not relogin:
+                    if config.application_settings.skip_logged_accounts is True and db_account_value and db_account_value.access_token:
+                        logger.warning(f"Account: {self.account_data.email} | Account already logged in, skipped")
+                        return operation_success(email=self.account_data.email, account_password=self.account_data.account_password)
 
                 logger.info(f"Account: {self.account_data.email} | Logging in | Attempt: {attempt + 1}/{max_attempts}..")
                 proxy = await self._prepare_account_proxy(db_account_value)
                 api = _3dosAPI(proxy=proxy)
 
-                access_token = await self._login_account(api=api)
+                if not relogin:
+                    access_token = await self._login_account(api=api)
+                else:
+                    access_token = await self._login_account(
+                        api=api,
+                        email=db_account_value.email,
+                        password=db_account_value.account_password
+                    )
+
                 api.access_token = access_token
 
                 profile_info = await api.profile_info()
@@ -563,6 +578,16 @@ class Bot:
                 if error.error_type == APIErrorType.EMAIL_NOT_VERIFIED:
                     await self.handle_invalid_account(self.account_data.email, self.account_data.password, self.account_data.account_password, "unverified")
                     return
+
+                elif error.error_type == APIErrorType.UNAUTHENTICATED:
+                    logger.warning(f"Account: {self.account_data.email} | Unauthenticated, logging in again..")
+                    operation_result = await self.process_login(relogin=True)
+                    if operation_result and operation_result["success"]:
+                        logger.success(f"Account: {self.account_data.email} | Re-login success, retrying farm")
+                        continue
+                    else:
+                        logger.error(f"Account: {self.account_data.email} | Re-login failed, skipping until next cycle")
+                        return
 
                 await db_account_value.set_sleep_until(get_sleep_until(minutes=config.application_settings.farm_delay))
                 logger.error(f"Account: {self.account_data.email} | Error occurred while farm (APIError): {error} | Skipped until next cycle")

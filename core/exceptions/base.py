@@ -5,6 +5,7 @@ class APIErrorType(Enum):
     INVALID_CAPTCHA = "Captcha verification failed."
     EMAIL_NOT_VERIFIED = "Your email address is not verified."
     API_KEY_ALREADY_GENERATED = "Api key is already generated for this account"
+    UNAUTHENTICATED = "Unauthenticated."
 
 
 class APIError(Exception):
@@ -24,6 +25,8 @@ class APIError(Exception):
     def error_message(self) -> str:
         if self.response_data and "message" in self.response_data:
             return self.response_data["message"]
+        elif self.response_data and "error" in self.response_data:
+            return self.response_data["error"]
         return self.error
 
     def __str__(self):

@@ -32,10 +32,17 @@ class SolviumCaptchaSolver:
 
 
     async def create_recaptcha_task(self, site_key: str, page_url: str, action: str, proxy: str) -> tuple[bool, Any] | tuple[bool, str]:
-        url = f"{self.base_url}/task/recaptcha-v3"
+        url = f"{self.base_url}/task/recaptcha-v3-custom"
         proxy = Proxy.from_str(proxy)
         proxy = f"http://{proxy.login}:{proxy.password}@{proxy.host}:{proxy.port}"
-        params = {"url": page_url, "sitekey": site_key, "action": action, "ref": "jammer", "proxy": proxy}
+        params = {
+            "url": page_url,
+            "sitekey": site_key,
+            "action": action,
+            "ref": "jammer",
+            "proxy": proxy,
+            "payload": "eyJkb2N1bWVudF9maW5nZXJwcmludCI6IjMwZTdlNDFlIiwiY2FsbGVlIjoiRElWLDFjMjJjZmU4IiwicmVzb3VyY2VzIjpbImh0dHBzOi8vZGFzaGJvYXJkLjNkb3MuaW8vYXNzZXRzL2luZGV4LUNZbmlucmVTLmpzIiwiaHR0cHM6Ly9kYXNoYm9hcmQuM2Rvcy5pby9hc3NldHMvaW5kZXgtQ2NVMVBmNDcuY3NzIiwiaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L25wbS9AdHNwYXJ0aWNsZXMvcHJlc2V0LWNvbmZldHRpQDMuMi4wL3RzcGFydGljbGVzLnByZXNldC5jb25mZXR0aS5idW5kbGUubWluLmpzIiwiaHR0cHM6Ly9kYXNoYm9hcmQuM2Rvcy5pby9hc3NldHMvM2Rvcy1DeEIzX185Mi5wbmciLCJodHRwczovL2Rhc2hib2FyZC4zZG9zLmlvL2Fzc2V0cy9sb2dpbl9tYXAtRHNqMHZwQnkucG5nIiwiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9yZWNhcHRjaGEvYXBpLmpzIiwiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9yZWNhcHRjaGEvYXBpMi9hbmNob3IiXSwidGl0bGUiOiIzRE9TIC0gUnVuIGEgM0RPU+KEoiBBSSBOb2RlIGFuZCBFYXJuISIsImV2YWx1YXRpb25fdGltZSI6eyJtaW4iOjE1LCJtYXgiOjIwfSwiZXJyb3IiOiJodHRwczovL2Rhc2hib2FyZC4zZG9zLmlvL2Fzc2V0cy9pbmRleC1DWW5pbnJlUy5qczozNzoxNzIxMyIsImFjdGlvbnMiOlt7ImlkIjo1MDA2LCJyYW5nZSI6eyJtaW4iOjEwMCwibWF4Ijo0MDB9fSx7ImlkIjo2NDYwNywicmFuZ2UiOnsibWluIjo0LCJtYXgiOjIwfX0seyJpZCI6NDU0NjQsInJhbmdlIjp7Im1pbiI6MiwibWF4IjoxMH19LHsiaWQiOjM1ODM3LCJyYW5nZSI6eyJtaW4iOjQsIm1heCI6MjB9fSx7ImlkIjozMTYxNywicmFuZ2UiOnsibWluIjoyMCwibWF4Ijo2MH19LHsiaWQiOjM3MTc4LCJyYW5nZSI6eyJtaW4iOjIwLCJtYXgiOjYwfX1dfQ=="
+        }
 
         try:
             response = await self.client.get(url, params=params)

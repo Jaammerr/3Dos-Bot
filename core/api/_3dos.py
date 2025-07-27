@@ -48,6 +48,11 @@ class APIClient:
                         f"API returned an error: {response_data}", response_data
                     )
 
+            elif response_data.get("error"):
+                raise APIError(
+                    f"API returned an error: {response_data['error']}", response_data
+                )
+
 
     async def close_session(self) -> None:
         try:
@@ -103,6 +108,7 @@ class APIClient:
                         raise SessionRateLimited("Session is rate limited")
 
                     if response.status_code in (500, 502, 503, 504):
+                        print(response.text, response.headers, response.status_code)
                         raise ServerError(f"Server error - {response.status_code}")
 
                     try:
@@ -141,9 +147,7 @@ class _3dosAPI(APIClient):
         headers = {
             'accept': 'application/json, text/plain, */*',
             'accept-language': 'en-US,en;q=0.9,ru;q=0.8',
-            'cache-control': 'no-cache',
             'content-type': 'application/json',
-            'expires': '0',
             'origin': 'https://dashboard.3dos.io',
             'referer': 'https://dashboard.3dos.io/',
             'user-agent': self.user_agent,

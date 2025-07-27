@@ -16,8 +16,8 @@ application_settings:
 
 attempts_and_delay_settings:
   delay_before_start:
-    min: 30 # seconds
-    max: 60 # seconds
+    min: 0 # seconds
+    max: 0 # seconds
 
   error_delay: 2 # seconds
   max_register_attempts: 3
@@ -29,7 +29,7 @@ attempts_and_delay_settings:
 
 
 captcha_settings:
-  max_captcha_solving_time: 120 # seconds
+  max_captcha_solving_time: 90 # seconds
   solvium_api_key: "" # Solvium API key - @solvium_crypto_bot
   proxy: "" # If API is unavailable due to your server GEO, insert proxy, format: "http://user:password@proxyserver:port"
 
@@ -39,7 +39,6 @@ redirect_settings:
   email: ""
   password: ""
   imap_server: ""
-  use_proxy: false
 
 
 imap_settings:
