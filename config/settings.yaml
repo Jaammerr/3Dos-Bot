@@ -29,7 +29,7 @@ attempts_and_delay_settings:
 
 
 captcha_settings:
-  max_captcha_solving_time: 90 # seconds
+  max_captcha_solving_time: 200 # seconds
   solvium_api_key: "" # Solvium API key - @solvium_crypto_bot
   proxy: "" # If API is unavailable due to your server GEO, insert proxy, format: "http://user:password@proxyserver:port"
 
