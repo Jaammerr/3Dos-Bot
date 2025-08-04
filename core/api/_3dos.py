@@ -169,10 +169,13 @@ class _3dosAPI(APIClient):
             headers=headers,
         )
 
+        if not response["message"]:
+            raise APIError("Most likely registration is closed by project, no message in response", response)
+
         return response["data"]
 
 
-    async def login(self, email: str, password: str) -> str:
+    async def login(self, email: str, password: str, captcha_token: str) -> str:
         headers = {
             'accept': 'application/json, text/plain, */*',
             'accept-language': 'en-US,en;q=0.9,ru;q=0.8',
@@ -185,6 +188,7 @@ class _3dosAPI(APIClient):
         json_data = {
             'email': email,
             'password': password,
+            'captcha_token': captcha_token,
         }
 
         response = await self.send_request(

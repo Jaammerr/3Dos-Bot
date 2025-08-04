@@ -136,7 +136,7 @@ class Bot:
             )
 
             if success:
-                logger.success(f"Account: {self.account_data.email} | Captcha solved successfully")
+                logger.success(f"Account: {self.account_data.email} | Captcha solved")
                 return success, answer
 
             raise ValueError(f"Failed to solve captcha challenge: {answer}")
@@ -223,15 +223,18 @@ class Bot:
         )
 
     async def _login_account(self, api: _3dosAPI, email: str = None, password: str = None) -> str:
+        solved, captcha_token = await self.get_captcha_data(api.proxy)
         if not email or not password:
             return await api.login(
                 email=self.account_data.email,
                 password=self.account_data.account_password,
+                captcha_token=captcha_token,
             )
         else:
             return await api.login(
                 email=email,
                 password=password,
+                captcha_token=captcha_token,
             )
 
     async def process_registration(self) -> OperationResult | None:
@@ -463,6 +466,16 @@ class Bot:
                 return operation_success(email=self.account_data.email, account_password=self.account_data.account_password)
 
             except APIError as error:
+                is_last_attempt = attempt == max_attempts - 1
+                if is_last_attempt:
+                    logger.error(f"Account: {self.account_data.email} | Max attempts reached, unable to login")
+                    return operation_success(email=self.account_data.email, account_password=self.account_data.account_password)
+
+                if error.error_type == APIErrorType.INVALID_CAPTCHA:
+                    logger.error(f"Account: {self.account_data.email} | Captcha answer incorrect | Retrying in {config.attempts_and_delay_settings.error_delay} seconds")
+                    await asyncio.sleep(config.attempts_and_delay_settings.error_delay)
+                    continue
+
                 logger.error(f"Account: {self.account_data.email} | Error occurred during login (APIError): {error} | Skipped permanently")
                 return operation_failed(email=self.account_data.email, account_password=self.account_data.account_password)
 
